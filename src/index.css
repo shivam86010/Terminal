@@ -1,3 +1,268 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Terminal Dark Theme (Default) */
+    --background: 240 10% 4%;
+    --foreground: 150 100% 50%;
+
+    --card: 240 10% 6%;
+    --card-foreground: 150 100% 50%;
+
+    --popover: 240 10% 6%;
+    --popover-foreground: 150 100% 50%;
+
+    --primary: 150 100% 50%;
+    --primary-foreground: 240 10% 4%;
+
+    --secondary: 180 100% 50%;
+    --secondary-foreground: 240 10% 4%;
+
+    --muted: 240 10% 15%;
+    --muted-foreground: 150 30% 60%;
+
+    --accent: 280 100% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 50% 20%;
+    --input: 240 10% 15%;
+    --ring: 150 100% 50%;
+
+    --radius: 0.25rem;
+
+    /* Terminal specific */
+    --terminal-bg: 240 10% 3%;
+    --terminal-border: 150 100% 25%;
+    --terminal-glow: 150 100% 50%;
+    --terminal-cursor: 150 100% 50%;
+    --terminal-selection: 150 50% 20%;
+    --terminal-prompt: 180 100% 50%;
+    --terminal-error: 0 100% 60%;
+    --terminal-warning: 45 100% 50%;
+    --terminal-success: 150 100% 50%;
+    --terminal-info: 200 100% 60%;
+
+    /* Scanline effect */
+    --scanline-color: 0 0% 0%;
+
+    --sidebar-background: 240 10% 4%;
+    --sidebar-foreground: 150 100% 50%;
+    --sidebar-primary: 150 100% 50%;
+    --sidebar-primary-foreground: 240 10% 4%;
+    --sidebar-accent: 240 10% 10%;
+    --sidebar-accent-foreground: 150 100% 50%;
+    --sidebar-border: 150 50% 20%;
+    --sidebar-ring: 150 100% 50%;
+  }
+
+  .theme-light {
+    --background: 0 0% 98%;
+    --foreground: 240 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 10%;
+
+    --primary: 240 10% 10%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 5% 90%;
+    --secondary-foreground: 240 10% 10%;
+
+    --muted: 240 5% 92%;
+    --muted-foreground: 240 5% 45%;
+
+    --accent: 240 5% 85%;
+    --accent-foreground: 240 10% 10%;
+
+    --border: 240 5% 85%;
+    --input: 240 5% 90%;
+    --ring: 240 10% 10%;
+
+    --terminal-bg: 0 0% 96%;
+    --terminal-border: 240 5% 80%;
+    --terminal-glow: 240 10% 10%;
+    --terminal-cursor: 240 10% 10%;
+    --terminal-selection: 240 5% 85%;
+    --terminal-prompt: 220 80% 50%;
+    --terminal-error: 0 70% 50%;
+    --terminal-warning: 40 90% 45%;
+    --terminal-success: 140 70% 40%;
+    --terminal-info: 200 80% 45%;
+    --scanline-color: 0 0% 100%;
+  }
+
+  .theme-hacker {
+    --background: 120 100% 2%;
+    --foreground: 120 100% 50%;
+
+    --card: 120 100% 3%;
+    --card-foreground: 120 100% 50%;
+
+    --popover: 120 100% 3%;
+    --popover-foreground: 120 100% 50%;
+
+    --primary: 120 100% 50%;
+    --primary-foreground: 120 100% 2%;
+
+    --secondary: 120 80% 40%;
+    --secondary-foreground: 120 100% 2%;
+
+    --muted: 120 50% 10%;
+    --muted-foreground: 120 50% 40%;
+
+    --accent: 120 100% 60%;
+    --accent-foreground: 120 100% 2%;
+
+    --border: 120 100% 20%;
+    --input: 120 50% 8%;
+    --ring: 120 100% 50%;
+
+    --terminal-bg: 120 100% 1%;
+    --terminal-border: 120 100% 25%;
+    --terminal-glow: 120 100% 50%;
+    --terminal-cursor: 120 100% 50%;
+    --terminal-selection: 120 50% 15%;
+    --terminal-prompt: 120 100% 60%;
+    --terminal-error: 0 100% 50%;
+    --terminal-warning: 60 100% 50%;
+    --terminal-success: 120 100% 50%;
+    --terminal-info: 180 100% 50%;
+    --scanline-color: 120 100% 2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+}
+
+@layer utilities {
+  .terminal-glow {
+    text-shadow: 
+      0 0 5px hsl(var(--terminal-glow)),
+      0 0 10px hsl(var(--terminal-glow) / 0.5),
+      0 0 20px hsl(var(--terminal-glow) / 0.3);
+  }
+
+  .terminal-glow-strong {
+    text-shadow: 
+      0 0 5px hsl(var(--terminal-glow)),
+      0 0 10px hsl(var(--terminal-glow)),
+      0 0 20px hsl(var(--terminal-glow) / 0.8),
+      0 0 40px hsl(var(--terminal-glow) / 0.5);
+  }
+
+  .terminal-box-glow {
+    box-shadow: 
+      0 0 10px hsl(var(--terminal-glow) / 0.3),
+      0 0 20px hsl(var(--terminal-glow) / 0.2),
+      inset 0 0 30px hsl(var(--terminal-glow) / 0.05);
+  }
+
+  .scanlines {
+    position: relative;
+  }
+
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      hsl(var(--scanline-color) / 0.03),
+      hsl(var(--scanline-color) / 0.03) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .cursor-blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .typing-effect {
+    overflow: hidden;
+    white-space: nowrap;
+    animation: typing 2s steps(40, end);
+  }
+
+  @keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .glitch {
+    animation: glitch 0.3s ease-in-out;
+  }
+
+  @keyframes glitch {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-2px); }
+    40% { transform: translateX(2px); }
+    60% { transform: translateX(-1px); }
+    80% { transform: translateX(1px); }
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--terminal-bg));
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--terminal-border));
+    border-radius: 4px;
+  }
+
+  .terminal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--terminal-glow) / 0.5);
+  }
+}

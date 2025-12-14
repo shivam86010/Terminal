@@ -1,14 +1,17 @@
 
 
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css'
-
+import Index from './Pages/index'
+import PageNotFound from './Pages/NotFound'
 function App() {
-  
-
   return (
-    <>
-      <p className="bg-red-500 py-2 "> typescript</p>
-    </>
+    <BrowserRouter>
+    <Routes>
+      <Route path='/' element={<Index/>} />
+      <Route path='*' element={<PageNotFound/>} />
+    </Routes>
+    </BrowserRouter>
   );
 }
 
