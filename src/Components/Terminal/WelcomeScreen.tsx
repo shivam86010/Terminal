@@ -191,7 +191,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
   const title = "FULL-STACK ARCHITECT";
   const subtitle = "DIGITAL INNOVATOR";
 
-  // Cursor blink
+  // Cursor blink effect 
   useEffect(() => {
     const interval = setInterval(() => {
       setShowCursor((prev) => !prev);
@@ -215,7 +215,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
     }
   }, [phase]);
 
-  // Glitch effects
+  // Glitch effects 
   useEffect(() => {
     if (phase >= bootSequence.length) {
       const glitchInterval = setInterval(() => {
@@ -237,7 +237,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onComplete }) => {
       );
       return () => clearTimeout(timeout);
     } else if (phase === bootSequence.length) {
-      // Type name
+      // type name 
       let index = 0;
       const typeInterval = setInterval(() => {
         if (index <= fullName.length) {
