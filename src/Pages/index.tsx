@@ -42,7 +42,7 @@
 
 import React, { useEffect, useState } from "react";
 import { TerminalProvider, useTerminal } from "../Context/TerminalContext";
-import { InitialLoader } from "../Components/Terminal/InitialLoader"; // Import the loader
+import { InitialLoader } from "../Components/Terminal/InitialLoader";
 import { WelcomeScreen } from "../Components/Terminal/WelcomeScreen";
 import { Terminal } from '../Components/Terminal/Terminal';
 
