@@ -18,15 +18,15 @@ export const TerminalInput: React.FC = () => {
   const localInputRef = useRef<HTMLInputElement>(null);
   const activeRef = inputRef || localInputRef;
 
-  // Focus input on mount and clicks
+  // focus input on mount and clicks
   useEffect(() => {
     activeRef.current?.focus();
   }, []);
 
-  // Global keyboard shortcuts
+  // global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+K to clear terminal
+      // ctrl+K to clear terminal
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault();
         clearHistory();
@@ -45,7 +45,7 @@ export const TerminalInput: React.FC = () => {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [clearHistory, setTheme, theme]);
 
-  // Update suggestion on input change
+  // update suggestion on input change
   useEffect(() => {
     if (input) {
       const suggestions = getAutoCompleteSuggestions(input);
@@ -70,7 +70,7 @@ export const TerminalInput: React.FC = () => {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // History navigation
+      // history navigation
       if (e.key === "ArrowUp") {
         e.preventDefault();
         const commands = commandHistory.map((entry) => entry.command);
@@ -94,7 +94,7 @@ export const TerminalInput: React.FC = () => {
         }
       }
 
-      // Tab completion
+      // tab completion
       if (e.key === "Tab") {
         e.preventDefault();
         if (suggestion) {
