@@ -142,13 +142,13 @@ export const TerminalInput: React.FC = () => {
           spellCheck={false}
           autoFocus
         />
-        {/* Auto-suggestion ghost text */}
+        {/* auto-suggestion ghost text */}
         {suggestion && input && (
           <span className="absolute left-0 top-0 text-muted-foreground/40 pointer-events-none font-mono">
             {suggestion}
           </span>
         )}
-        {/* Blinking cursor when empty */}
+        {/* blinking cursor when empty */}
         {!input && (
           <span className="text-terminal-cursor cursor-blink absolute left-0">
             ▋
