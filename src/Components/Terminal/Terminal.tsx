@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 
 import { useTerminal } from "../../Context/TerminalContext";
 // import { TerminalInput } from "./TerminalInput";
-// import { HeroOutput } from "./outputs/HeroOutput";
+import { HeroOutput } from "./Outputs/HeroOutput";
 
 export const Terminal: React.FC = () => {
   const { commandHistory } = useTerminal();
@@ -36,7 +36,7 @@ export const Terminal: React.FC = () => {
       >
         {/* initial welcome message */}
         <div className="mb-6">
-          {/* <HeroOutput /> */}
+          <HeroOutput />
         </div>
 
         {/* Command history */}

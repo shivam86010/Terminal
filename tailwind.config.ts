@@ -18,6 +18,30 @@ export default {
       },
     },
     extend: {
+      animation: {
+        scan: "scan 3s ease-in-out infinite",
+        float: "float 3s ease-in-out infinite",
+        "gradient-x": "gradient-x 15s ease infinite",
+      },
+      keyframes: {
+        scan: {
+          "0%, 100%": { top: "0%", opacity: "0" },
+          "50%": { top: "100%", opacity: "1" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+      },
+      backgroundImage: {
+        "grid-pattern":
+          "linear-gradient(to right, #8882 1px, transparent 1px), linear-gradient(to bottom, #8882 1px, transparent 1px)",
+      },
+
       fontFamily: {
         mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },

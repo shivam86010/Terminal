@@ -45,7 +45,7 @@ import { TerminalProvider, useTerminal } from "../Context/TerminalContext";
 import { InitialLoader } from "../Components/Terminal/InitialLoader";
 import { WelcomeScreen } from "../Components/Terminal/WelcomeScreen";
 import { Terminal } from '../Components/Terminal/Terminal';
-
+import { ProjectEditor } from "../Components/Terminal/ProjectEditor";
 const PortfolioContent: React.FC = () => {
   const { currentView } = useTerminal();
   const [showLoader, setShowLoader] = useState(true);
@@ -98,7 +98,7 @@ const PortfolioContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 fade-in">
       <div className="max-w-6xl mx-auto h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] lg:h-[calc(100vh-4rem)]">
-        {currentView === 'terminal' ? <Terminal /> : ""}
+        {currentView === "terminal" ? <Terminal /> : <ProjectEditor />}
       </div>
     </div>
   );
