@@ -8,7 +8,7 @@ export const Terminal: React.FC = () => {
   const { commandHistory } = useTerminal();
   const outputRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom on new commands
+  // auto-scroll to bottom on new commands
   useEffect(() => {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
@@ -29,12 +29,12 @@ export const Terminal: React.FC = () => {
         </span>
       </div>
 
-      {/* Terminal Output Area */}
+      {/* terminal Output Area */}
       <div
         ref={outputRef}
         className="flex-1 overflow-y-auto p-4 terminal-scrollbar min-h-0"
       >
-        {/* Initial welcome message */}
+        {/* initial welcome message */}
         <div className="mb-6">
           {/* <HeroOutput /> */}
         </div>
@@ -52,7 +52,7 @@ export const Terminal: React.FC = () => {
           </div>
         ))}
 
-        {/* Current input line */}
+        {/* current input line */}
         {/* <TerminalInput /> */}
       </div>
     </div>
