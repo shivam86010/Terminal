@@ -53,7 +53,7 @@ export const Terminal: React.FC = () => {
         ))}
 
         {/* current input line */}
-        {/* <TerminalInput /> */}
+        <TerminalInput />
       </div>
     </div>
   );

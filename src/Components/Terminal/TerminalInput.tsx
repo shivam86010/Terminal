@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useTerminal } from "@/context/TerminalContext";
+import { useTerminal } from "../../Context/TerminalContext";
 import { useCommandProcessor } from "@/hooks/useCommandProcessor";
 
 export const TerminalInput: React.FC = () => {

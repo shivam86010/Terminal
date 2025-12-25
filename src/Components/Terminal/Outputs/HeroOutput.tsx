@@ -121,7 +121,7 @@
 // };
 
 import React from "react";
-
+import { personalInfo } from "../../../Data/portfolio";
 export const HeroOutput: React.FC = () => {
   return (
     <div className="slide-up space-y-6 md:space-y-8">
@@ -230,7 +230,9 @@ export const HeroOutput: React.FC = () => {
 
             {/* Animated border */}
             <div className="absolute inset-0 rounded-xl border border-transparent bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 animate-gradient-x" />
-
+            <span className="text-secondary terminal-glow text-lg sm:text-xl typing-effect">
+            {personalInfo.title}
+            </span>
             <div className="relative space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-terminal-success animate-pulse" />
