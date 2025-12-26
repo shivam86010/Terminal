@@ -51,7 +51,7 @@ const PortfolioContent: React.FC = () => {
   const [showLoader, setShowLoader] = useState(true);
   const [showWelcome, setShowWelcome] = useState(false);
 
-  // Handle skip on key press
+  // handle skip on key press
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Only allow skip on Escape or Space
@@ -94,7 +94,7 @@ const PortfolioContent: React.FC = () => {
     );
   }
 
-  // Main portfolio content
+  // main portfolio content start here
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8 fade-in">
       <div className="max-w-6xl mx-auto h-[calc(100vh-2rem)] sm:h-[calc(100vh-3rem)] lg:h-[calc(100vh-4rem)]">
