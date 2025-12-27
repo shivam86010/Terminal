@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTerminal } from "../../Context/TerminalContext";
-import { useCommandProcessor } from "@/hooks/useCommandProcessor";
+import { useCommandProcessor } from "../../hooks/useCommandProcessor";
 
 export const TerminalInput: React.FC = () => {
   const [input, setInput] = useState("");
@@ -112,7 +112,7 @@ export const TerminalInput: React.FC = () => {
 
   // Get short directory name for prompt
   const getPromptDir = () => {
-    if (currentDirectory === "~") return "~";
+    if (!currentDirectory || currentDirectory === "~") return "~";
     const parts = currentDirectory.split("/");
     return parts[parts.length - 1] || "~";
   };

@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 
 import { useTerminal } from "../../Context/TerminalContext";
-// import { TerminalInput } from "./TerminalInput";
+import { TerminalInput } from "./TerminalInput";
 import { HeroOutput } from "./Outputs/HeroOutput";
 
 export const Terminal: React.FC = () => {
