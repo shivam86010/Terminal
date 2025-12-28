@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { useTerminal } from "../Context/TerminalContext";
 import { HeroOutput } from "../Components/Terminal/Outputs/HeroOutput";
+import { AboutOutput } from "../Components/Terminal/Outputs/AboutOutput";
 
 export const useCommandProcessor = () => {
   const { addCommand, setCurrentSection } = useTerminal();
@@ -9,14 +10,20 @@ export const useCommandProcessor = () => {
     (input: string) => {
       const trimmedInput = input.trim().toLowerCase();
 
-      // Navigation commands
+      // Navigation commands for navigation 
       if (trimmedInput === "/herosection" || trimmedInput === "home") {
         setCurrentSection("home");
         addCommand(input, <HeroOutput />);
         return;
       }
+
+      if (trimmedInput === "/about" || trimmedInput === "about") {
+        setCurrentSection("about");
+        addCommand(input, <AboutOutput />);
+        return;
+      }
     },
-    [addCommand, setCurrentSection] // ✅ dependency array
+    [addCommand, setCurrentSection] 
   );
 
   const getAutoCompleteSuggestions = useCallback((input: string): string[] => {
