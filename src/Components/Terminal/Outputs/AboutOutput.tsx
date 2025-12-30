@@ -635,7 +635,7 @@ export const AboutOutput: React.FC = () => {
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-primary/10 to-cyan-500/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="relative bg-gradient-to-br from-white/5 to-white/2 backdrop-blur-sm rounded-2xl p-6 border border-white/10 overflow-hidden">
-          {/* Animated scanning line */}
+          
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent animate-scan" />
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -683,7 +683,7 @@ export const AboutOutput: React.FC = () => {
         </div>
       </div>
 
-      {/* Footer CTA */}
+  
       <div className="text-center py-8">
         <p className="text-muted-foreground text-sm font-medium mb-4">
           Let's build something amazing together
