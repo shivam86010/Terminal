@@ -1,5 +1,5 @@
 import React from "react";
-import { personalInfo } from "@/data/portfolio";
+import { personalInfo } from "../../../Data/portfolio";
 import {
   Mail,
   Linkedin,

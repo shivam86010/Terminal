@@ -2,7 +2,9 @@ import React, { useCallback } from "react";
 import { useTerminal } from "../Context/TerminalContext";
 import { HeroOutput } from "../Components/Terminal/Outputs/HeroOutput";
 import { AboutOutput } from "../Components/Terminal/Outputs/AboutOutput";
-
+import { ExperienceOutput } from "../Components/Terminal/Outputs/ExperienceOutput";
+import { ProjectsOutput } from "../Components/Terminal/Outputs/ProjectsOutput";
+import { ConnectOutput } from "../Components/Terminal/Outputs/ConnectOutput";
 export const useCommandProcessor = () => {
   const { addCommand, setCurrentSection } = useTerminal();
 
@@ -22,6 +24,29 @@ export const useCommandProcessor = () => {
         addCommand(input, <AboutOutput />);
         return;
       }
+
+      if (trimmedInput === "/experience" || trimmedInput === "experience") {
+        setCurrentSection("experience");
+        addCommand(input, <ExperienceOutput />);
+        return;
+      }
+
+      if (trimmedInput === "/projects" || trimmedInput === "projects") {
+        setCurrentSection("projects");
+        addCommand(input, <ProjectsOutput />);
+        return;
+      }
+
+      if (
+        trimmedInput === "/connect" ||
+        trimmedInput === "connect" ||
+        trimmedInput === "contact"
+      ) {
+        setCurrentSection("connect");
+        addCommand(input, <ConnectOutput />);
+        return;
+      }
+
     },
     [addCommand, setCurrentSection] 
   );

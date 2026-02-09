@@ -18,15 +18,15 @@ export const TerminalInput: React.FC = () => {
   const localInputRef = useRef<HTMLInputElement>(null);
   const activeRef = inputRef || localInputRef;
 
-  // focus input on mount and clicks
+  // Focus input on mount and clicks
   useEffect(() => {
     activeRef.current?.focus();
   }, []);
 
-  // global keyboard shortcuts
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // ctrl+K to clear terminal
+      // Ctrl+K to clear terminal
       if (e.ctrlKey && e.key === "k") {
         e.preventDefault();
         clearHistory();
@@ -45,7 +45,7 @@ export const TerminalInput: React.FC = () => {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [clearHistory, setTheme, theme]);
 
-  // update suggestion on input change
+  // Update suggestion on input change
   useEffect(() => {
     if (input) {
       const suggestions = getAutoCompleteSuggestions(input);
@@ -65,12 +65,12 @@ export const TerminalInput: React.FC = () => {
         setSuggestion(null);
       }
     },
-    [input, processCommand]
+    [input, processCommand],
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // history navigation
+      // History navigation
       if (e.key === "ArrowUp") {
         e.preventDefault();
         const commands = commandHistory.map((entry) => entry.command);
@@ -94,7 +94,7 @@ export const TerminalInput: React.FC = () => {
         }
       }
 
-      // tab completion
+      // Tab completion
       if (e.key === "Tab") {
         e.preventDefault();
         if (suggestion) {
@@ -103,7 +103,7 @@ export const TerminalInput: React.FC = () => {
         }
       }
     },
-    [commandHistory, historyIndex, suggestion]
+    [commandHistory, historyIndex, suggestion],
   );
 
   const handleContainerClick = () => {
@@ -112,10 +112,12 @@ export const TerminalInput: React.FC = () => {
 
   // Get short directory name for prompt
   const getPromptDir = () => {
-    if (!currentDirectory || currentDirectory === "~") return "~";
+    if (!currentDirectory) return "~";
+    if (currentDirectory === "~") return "~";
     const parts = currentDirectory.split("/");
     return parts[parts.length - 1] || "~";
   };
+
 
   return (
     <div
@@ -142,13 +144,13 @@ export const TerminalInput: React.FC = () => {
           spellCheck={false}
           autoFocus
         />
-        {/* auto-suggestion ghost text */}
+        {/* Auto-suggestion ghost text */}
         {suggestion && input && (
           <span className="absolute left-0 top-0 text-muted-foreground/40 pointer-events-none font-mono">
             {suggestion}
           </span>
         )}
-        {/* blinking cursor when empty */}
+        {/* Blinking cursor when empty */}
         {!input && (
           <span className="text-terminal-cursor cursor-blink absolute left-0">
             ▋
