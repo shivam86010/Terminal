@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { useTerminal } from "../Context/TerminalContext";
 import { HeroOutput } from "../Components/Terminal/Outputs/HeroOutput";
 import { AboutOutput } from "../Components/Terminal/Outputs/AboutOutput";
