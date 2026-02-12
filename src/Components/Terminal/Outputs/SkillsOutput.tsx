@@ -1,5 +1,5 @@
 import React from "react";
-import { skills } from "@/data/portfolio";
+import { skills } from "../../../Data/portfolio";
 
 export const SkillsOutput: React.FC = () => {
   return (
