@@ -1,7 +1,13 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import Editor from "@monaco-editor/react";
-import { useTerminal } from "../../Context/TerminalContext";
-import type { ProjectFile } from "../../Types/terminal";
+import { useTerminal } from "@/context/TerminalContext";
+import { ProjectFile } from "@/types/terminal";
 import {
   ChevronRight,
   ChevronDown,
@@ -51,13 +57,14 @@ import {
   Link,
   Edit3,
   ChevronsDownUp,
+  Filter,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "../Ui/tooltip";
+} from "@/components/ui/tooltip";
 
 // Context Menu Component
 interface ContextMenuProps {
@@ -246,6 +253,16 @@ interface FileTreeProps {
   onContextMenu?: (e: React.MouseEvent, file: ProjectFile) => void;
   expanded: Record<string, boolean>;
   setExpanded: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  onDragStart?: (file: ProjectFile, parentPath: string) => void;
+  onDrop?: (targetFolder: ProjectFile | null, parentPath: string) => void;
+  parentPath?: string;
+  dragOverFolder?: string | null;
+  setDragOverFolder?: (folder: string | null) => void;
+  renamingFile?: ProjectFile | null;
+  renameValue?: string;
+  setRenameValue?: (value: string) => void;
+  onRenameSubmit?: (file: ProjectFile, newName: string) => void;
+  onRenameStart?: (file: ProjectFile) => void;
 }
 
 const FileTree: React.FC<FileTreeProps> = ({
@@ -257,6 +274,16 @@ const FileTree: React.FC<FileTreeProps> = ({
   onContextMenu,
   expanded,
   setExpanded,
+  onDragStart,
+  onDrop,
+  parentPath = "",
+  dragOverFolder,
+  setDragOverFolder,
+  renamingFile,
+  renameValue,
+  setRenameValue,
+  onRenameSubmit,
+  onRenameStart,
 }) => {
   const toggleFolder = (name: string) => {
     setExpanded((prev) => ({ ...prev, [name]: !prev[name] }));
@@ -277,69 +304,170 @@ const FileTree: React.FC<FileTreeProps> = ({
     return iconColors[ext || ""] || "text-muted-foreground";
   };
 
+  const handleDragStart = (e: React.DragEvent, file: ProjectFile) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", file.name);
+    onDragStart?.(file, parentPath);
+  };
+
+  const handleDragOver = (e: React.DragEvent, file: ProjectFile) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (file.type === "folder") {
+      e.dataTransfer.dropEffect = "move";
+      setDragOverFolder?.(file.name);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverFolder?.(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetFolder: ProjectFile | null) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder?.(null);
+    if (targetFolder?.type === "folder") {
+      onDrop?.(targetFolder, parentPath);
+    }
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent, file: ProjectFile) => {
+    e.stopPropagation();
+    onRenameStart?.(file);
+  };
+
+  const handleRenameKeyDown = (e: React.KeyboardEvent, file: ProjectFile) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      onRenameSubmit?.(file, renameValue || "");
+    } else if (e.key === "Escape") {
+      onRenameSubmit?.(file, file.name); // Cancel rename
+    }
+  };
+
   return (
     <div className="space-y-0">
-      {files.map((file) => (
-        <div key={file.name} className="group">
-          {file.type === "folder" ? (
-            <>
-              <div
-                onClick={() => toggleFolder(file.name)}
-                onContextMenu={(e) => onContextMenu?.(e, file)}
-                className="flex items-center gap-1 px-2 py-0.5 hover:bg-[#2a2d2e] cursor-pointer text-sm"
-                style={{ paddingLeft: `${level * 12 + 8}px` }}
-              >
-                {expanded[file.name] ? (
-                  <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                )}
-                <Folder className="w-4 h-4 text-yellow-500 shrink-0" />
-                <span className="text-[#cccccc] truncate flex-1">
-                  {file.name}
-                </span>
-              </div>
-              {expanded[file.name] && file.children && (
-                <FileTree
-                  files={file.children}
-                  level={level + 1}
-                  onFileSelect={onFileSelect}
-                  selectedFile={selectedFile}
-                  onDeleteFile={onDeleteFile}
-                  onContextMenu={onContextMenu}
-                  expanded={expanded}
-                  setExpanded={setExpanded}
-                />
-              )}
-            </>
-          ) : (
-            <div
-              onClick={() => onFileSelect(file)}
-              onContextMenu={(e) => onContextMenu?.(e, file)}
-              className={`flex items-center gap-2 px-2 py-0.5 cursor-pointer text-sm ${
-                selectedFile?.name === file.name
-                  ? "bg-[#094771] text-white"
-                  : "hover:bg-[#2a2d2e] text-[#cccccc]"
-              }`}
-              style={{ paddingLeft: `${level * 12 + 24}px` }}
-            >
-              <File className={`w-4 h-4 shrink-0 ${getFileIcon(file.name)}`} />
-              <span className="truncate flex-1">{file.name}</span>
-              {onDeleteFile && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteFile(file);
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-500/20 rounded"
+      {files.map((file) => {
+        const currentPath = parentPath
+          ? `${parentPath}/${file.name}`
+          : file.name;
+        const isDragOver = dragOverFolder === file.name;
+        const isRenaming = renamingFile?.name === file.name;
+
+        return (
+          <div key={file.name} className="group">
+            {file.type === "folder" ? (
+              <>
+                <div
+                  draggable={!isRenaming}
+                  onDragStart={(e) => handleDragStart(e, file)}
+                  onDragOver={(e) => handleDragOver(e, file)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, file)}
+                  onClick={() => !isRenaming && toggleFolder(file.name)}
+                  onDoubleClick={(e) => handleDoubleClick(e, file)}
+                  onContextMenu={(e) => onContextMenu?.(e, file)}
+                  className={`flex items-center gap-1 px-2 py-0.5 hover:bg-[#2a2d2e] cursor-pointer text-sm transition-colors
+                    ${isDragOver ? "bg-[#094771] ring-1 ring-blue-400" : ""}`}
+                  style={{ paddingLeft: `${level * 12 + 8}px` }}
                 >
-                  <Trash2 className="w-3 h-3 text-red-400" />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      ))}
+                  {expanded[file.name] ? (
+                    <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                  )}
+                  <Folder
+                    className={`w-4 h-4 shrink-0 ${isDragOver ? "text-blue-400" : "text-yellow-500"}`}
+                  />
+                  {isRenaming ? (
+                    <input
+                      type="text"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue?.(e.target.value)}
+                      onKeyDown={(e) => handleRenameKeyDown(e, file)}
+                      onBlur={() => onRenameSubmit?.(file, renameValue || "")}
+                      autoFocus
+                      className="flex-1 bg-[#3c3c3c] text-[#cccccc] text-sm px-1 py-0 border border-[#007acc] outline-none rounded"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span className="text-[#cccccc] truncate flex-1">
+                      {file.name}
+                    </span>
+                  )}
+                </div>
+                {expanded[file.name] && file.children && (
+                  <FileTree
+                    files={file.children}
+                    level={level + 1}
+                    onFileSelect={onFileSelect}
+                    selectedFile={selectedFile}
+                    onDeleteFile={onDeleteFile}
+                    onContextMenu={onContextMenu}
+                    expanded={expanded}
+                    setExpanded={setExpanded}
+                    onDragStart={onDragStart}
+                    onDrop={onDrop}
+                    parentPath={currentPath}
+                    dragOverFolder={dragOverFolder}
+                    setDragOverFolder={setDragOverFolder}
+                    renamingFile={renamingFile}
+                    renameValue={renameValue}
+                    setRenameValue={setRenameValue}
+                    onRenameSubmit={onRenameSubmit}
+                    onRenameStart={onRenameStart}
+                  />
+                )}
+              </>
+            ) : (
+              <div
+                draggable={!isRenaming}
+                onDragStart={(e) => handleDragStart(e, file)}
+                onClick={() => !isRenaming && onFileSelect(file)}
+                onDoubleClick={(e) => handleDoubleClick(e, file)}
+                onContextMenu={(e) => onContextMenu?.(e, file)}
+                className={`flex items-center gap-2 px-2 py-0.5 cursor-grab text-sm transition-colors ${
+                  selectedFile?.name === file.name
+                    ? "bg-[#094771] text-white"
+                    : "hover:bg-[#2a2d2e] text-[#cccccc]"
+                }`}
+                style={{ paddingLeft: `${level * 12 + 24}px` }}
+              >
+                <File
+                  className={`w-4 h-4 shrink-0 ${getFileIcon(file.name)}`}
+                />
+                {isRenaming ? (
+                  <input
+                    type="text"
+                    value={renameValue}
+                    onChange={(e) => setRenameValue?.(e.target.value)}
+                    onKeyDown={(e) => handleRenameKeyDown(e, file)}
+                    onBlur={() => onRenameSubmit?.(file, renameValue || "")}
+                    autoFocus
+                    className="flex-1 bg-[#3c3c3c] text-[#cccccc] text-sm px-1 py-0 border border-[#007acc] outline-none rounded"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className="truncate flex-1">{file.name}</span>
+                )}
+                {onDeleteFile && !isRenaming && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteFile(file);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-red-500/20 rounded"
+                  >
+                    <Trash2 className="w-3 h-3 text-red-400" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -433,7 +561,7 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({
 
   const handleSubmenuHover = (
     submenuItems: MenuItemProps[] | null,
-    submenuLabel: string
+    submenuLabel: string,
   ) => {
     if (submenuItems) {
       setActiveSubmenu({ items: submenuItems, label: submenuLabel });
@@ -444,11 +572,7 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({
     <div ref={menuRef} className="relative">
       <button
         onClick={onToggle}
-        className={`px-2 py-1 text-sm ${
-          isOpen
-            ? "bg-[#094771] text-white"
-            : "text-[#cccccc] hover:bg-[#3c3c3c]"
-        } ${iconOnly ? "px-1.5" : ""}`}
+        className={`px-2 py-1 text-sm ${isOpen ? "bg-[#094771] text-white" : "text-[#cccccc] hover:bg-[#3c3c3c]"} ${iconOnly ? "px-1.5" : ""}`}
       >
         {label}
       </button>
@@ -561,8 +685,8 @@ const IntegratedTerminal: React.FC<IntegratedTerminalProps> = ({
                 entry.type === "success"
                   ? "text-[#4ec9b0]"
                   : entry.type === "error"
-                  ? "text-[#f14c4c]"
-                  : "text-[#cccccc]"
+                    ? "text-[#f14c4c]"
+                    : "text-[#cccccc]"
               }`}
             >
               {entry.output}
@@ -632,13 +756,68 @@ export const ProjectEditor: React.FC = () => {
     file: ProjectFile;
     action: "copy" | "cut";
   } | null>(null);
+  const [targetFolder, setTargetFolder] = useState<ProjectFile | null>(null);
+  const [draggedFile, setDraggedFile] = useState<{
+    file: ProjectFile;
+    parentPath: string;
+  } | null>(null);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [renamingFile, setRenamingFile] = useState<ProjectFile | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const editorRef = useRef<any>(null);
   const secondaryEditorRef = useRef<any>(null);
 
-  // Initialize project files
+  // Filter files based on search query
+  const filterFiles = useCallback(
+    (files: ProjectFile[], query: string): ProjectFile[] => {
+      if (!query.trim()) return files;
+
+      const lowerQuery = query.toLowerCase();
+
+      const filterRecursive = (items: ProjectFile[]): ProjectFile[] => {
+        return items.reduce<ProjectFile[]>((acc, file) => {
+          if (file.type === "folder") {
+            const filteredChildren = file.children
+              ? filterRecursive(file.children)
+              : [];
+            // Include folder if it has matching children or its name matches
+            if (
+              filteredChildren.length > 0 ||
+              file.name.toLowerCase().includes(lowerQuery)
+            ) {
+              acc.push({ ...file, children: filteredChildren });
+            }
+          } else {
+            if (file.name.toLowerCase().includes(lowerQuery)) {
+              acc.push(file);
+            }
+          }
+          return acc;
+        }, []);
+      };
+
+      return filterRecursive(files);
+    },
+    [],
+  );
+
+  const filteredFiles = useMemo(
+    () => filterFiles(projectFiles, searchQuery),
+    [projectFiles, searchQuery, filterFiles],
+  );
+
+  // Initialize project files - load custom files from localStorage
   useEffect(() => {
     if (selectedProject) {
-      setProjectFiles([...selectedProject.files]);
+      // Load custom files from localStorage
+      const savedFiles = localStorage.getItem(`files-${selectedProject.id}`);
+      if (savedFiles) {
+        setProjectFiles(JSON.parse(savedFiles));
+      } else {
+        setProjectFiles([...selectedProject.files]);
+      }
       // Initialize package.json
       const saved = localStorage.getItem(`package-${selectedProject.id}`);
       if (saved) {
@@ -654,6 +833,16 @@ export const ProjectEditor: React.FC = () => {
       }
     }
   }, [selectedProject]);
+
+  // Save project files to localStorage whenever they change
+  useEffect(() => {
+    if (selectedProject && projectFiles.length > 0) {
+      localStorage.setItem(
+        `files-${selectedProject.id}`,
+        JSON.stringify(projectFiles),
+      );
+    }
+  }, [projectFiles, selectedProject]);
 
   // Load saved content from localStorage
   useEffect(() => {
@@ -685,7 +874,7 @@ export const ProjectEditor: React.FC = () => {
       const contentToSave = { ...fileContents };
       localStorage.setItem(
         `project-${selectedProject.id}`,
-        JSON.stringify(contentToSave)
+        JSON.stringify(contentToSave),
       );
       setModifiedFiles((prev) => {
         const next = new Set(prev);
@@ -702,7 +891,7 @@ export const ProjectEditor: React.FC = () => {
     if (selectedProject) {
       localStorage.setItem(
         `project-${selectedProject.id}`,
-        JSON.stringify(fileContents)
+        JSON.stringify(fileContents),
       );
       setModifiedFiles(new Set());
       toast.success("All files saved!", {
@@ -737,7 +926,7 @@ export const ProjectEditor: React.FC = () => {
           if (selectedProject?.liveUrl) {
             setTimeout(
               () => window.open(selectedProject.liveUrl, "_blank"),
-              1000
+              1000,
             );
           }
           return;
@@ -756,7 +945,7 @@ export const ProjectEditor: React.FC = () => {
             setPackageJson(newPackageJson);
             localStorage.setItem(
               `package-${selectedProject?.id}`,
-              JSON.stringify(newPackageJson)
+              JSON.stringify(newPackageJson),
             );
 
             setTerminalHistory((prev) => [
@@ -800,7 +989,7 @@ export const ProjectEditor: React.FC = () => {
 
       if (command === "ls" || command === "dir") {
         const files = projectFiles.map((f) =>
-          f.type === "folder" ? `📁 ${f.name}/` : `📄 ${f.name}`
+          f.type === "folder" ? `📁 ${f.name}/` : `📄 ${f.name}`,
         );
         setTerminalHistory((prev) => [
           ...prev,
@@ -984,7 +1173,7 @@ export const ProjectEditor: React.FC = () => {
         },
       ]);
     },
-    [selectedProject, projectFiles, fileContents, packageJson, selectedFile]
+    [selectedProject, projectFiles, fileContents, packageJson, selectedFile],
   );
 
   // Keyboard shortcuts
@@ -1006,10 +1195,86 @@ export const ProjectEditor: React.FC = () => {
         e.preventDefault();
         setShowSidebar((prev) => !prev);
       }
+      // Show shortcuts popup with Ctrl+?
+      if (e.ctrlKey && (e.key === "?" || (e.shiftKey && e.key === "/"))) {
+        e.preventDefault();
+        setShowShortcuts((prev) => !prev);
+      }
+      // F2 to rename selected file
+      if (e.key === "F2" && selectedFile) {
+        e.preventDefault();
+        setRenamingFile(selectedFile);
+        setRenameValue(selectedFile.name);
+      }
+      // Escape to close shortcuts popup
+      if (e.key === "Escape") {
+        setShowShortcuts(false);
+        setRenamingFile(null);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSave, handleSaveAll]);
+  }, [handleSave, handleSaveAll, selectedFile]);
+
+  // Handle file rename
+  const handleRenameFile = useCallback(
+    (oldFile: ProjectFile, newName: string) => {
+      if (!newName.trim() || newName === oldFile.name) {
+        setRenamingFile(null);
+        return;
+      }
+
+      const renameInTree = (files: ProjectFile[]): ProjectFile[] => {
+        return files.map((f) => {
+          if (f === oldFile || f.name === oldFile.name) {
+            return { ...f, name: newName.trim() };
+          }
+          if (f.type === "folder" && f.children) {
+            return { ...f, children: renameInTree(f.children) };
+          }
+          return f;
+        });
+      };
+
+      setProjectFiles((prev) => renameInTree(prev));
+
+      // Update file contents key
+      if (fileContents[oldFile.name] !== undefined) {
+        setFileContents((prev) => {
+          const next = { ...prev };
+          next[newName.trim()] = next[oldFile.name];
+          delete next[oldFile.name];
+          return next;
+        });
+      }
+
+      // Update selected file
+      if (selectedFile?.name === oldFile.name) {
+        setSelectedFile({ ...oldFile, name: newName.trim() });
+      }
+
+      // Update open tabs
+      setOpenTabs((prev) =>
+        prev.map((t) =>
+          t.name === oldFile.name ? { ...t, name: newName.trim() } : t,
+        ),
+      );
+
+      // Update modified files set
+      if (modifiedFiles.has(oldFile.name)) {
+        setModifiedFiles((prev) => {
+          const next = new Set(prev);
+          next.delete(oldFile.name);
+          next.add(newName.trim());
+          return next;
+        });
+      }
+
+      toast.success(`Renamed to: ${newName.trim()}`);
+      setRenamingFile(null);
+    },
+    [fileContents, selectedFile, modifiedFiles],
+  );
 
   const handleEditorChange = (value: string | undefined) => {
     if (selectedFile && value !== undefined) {
@@ -1042,14 +1307,52 @@ export const ProjectEditor: React.FC = () => {
     toast.success(`Deleted: ${file.name}`);
   };
 
-  const handleNewFile = () => {
+  const handleNewFile = (folder?: ProjectFile | null) => {
+    if (
+      folder instanceof Event ||
+      (folder && typeof (folder as any).preventDefault === "function")
+    ) {
+      // Called from button click, add to root
+      setTargetFolder(null);
+    } else {
+      setTargetFolder(folder || null);
+    }
     setShowNewFileInput(true);
     setNewItemName("");
   };
 
-  const handleNewFolder = () => {
+  const handleNewFolder = (folder?: ProjectFile | null) => {
+    if (
+      folder instanceof Event ||
+      (folder && typeof (folder as any).preventDefault === "function")
+    ) {
+      // Called from button click, add to root
+      setTargetFolder(null);
+    } else {
+      setTargetFolder(folder || null);
+    }
     setShowNewFolderInput(true);
     setNewItemName("");
+  };
+
+  // Helper to add file/folder inside a specific folder recursively
+  const addToFolder = (
+    files: ProjectFile[],
+    targetFolderName: string,
+    newItem: ProjectFile,
+  ): ProjectFile[] => {
+    return files.map((f) => {
+      if (f.type === "folder" && f.name === targetFolderName) {
+        return { ...f, children: [...(f.children || []), newItem] };
+      }
+      if (f.type === "folder" && f.children) {
+        return {
+          ...f,
+          children: addToFolder(f.children, targetFolderName, newItem),
+        };
+      }
+      return f;
+    });
   };
 
   const handleCreateNewFile = () => {
@@ -1059,11 +1362,23 @@ export const ProjectEditor: React.FC = () => {
         type: "file",
         content: "",
       };
-      setProjectFiles((prev) => [...prev, newFile]);
+
+      if (targetFolder && targetFolder.type === "folder") {
+        // Add inside the target folder
+        setProjectFiles((prev) =>
+          addToFolder(prev, targetFolder.name, newFile),
+        );
+        setExpanded((prev) => ({ ...prev, [targetFolder.name]: true }));
+      } else {
+        // Add to root
+        setProjectFiles((prev) => [...prev, newFile]);
+      }
+
       setFileContents((prev) => ({ ...prev, [newItemName.trim()]: "" }));
       toast.success(`Created: ${newItemName.trim()}`);
       setShowNewFileInput(false);
       setNewItemName("");
+      setTargetFolder(null);
       setSelectedFile(newFile);
       setOpenTabs((prev) => [
         ...prev.filter((t) => t.name !== newFile.name),
@@ -1079,10 +1394,22 @@ export const ProjectEditor: React.FC = () => {
         type: "folder",
         children: [],
       };
-      setProjectFiles((prev) => [...prev, newFolder]);
+
+      if (targetFolder && targetFolder.type === "folder") {
+        // Add inside the target folder
+        setProjectFiles((prev) =>
+          addToFolder(prev, targetFolder.name, newFolder),
+        );
+        setExpanded((prev) => ({ ...prev, [targetFolder.name]: true }));
+      } else {
+        // Add to root
+        setProjectFiles((prev) => [...prev, newFolder]);
+      }
+
       toast.success(`Created folder: ${newItemName.trim()}`);
       setShowNewFolderInput(false);
       setNewItemName("");
+      setTargetFolder(null);
     }
   };
 
@@ -1101,7 +1428,7 @@ export const ProjectEditor: React.FC = () => {
     if (selectedFile?.name === file.name) {
       const remaining = openTabs.filter((t) => t.name !== file.name);
       setSelectedFile(
-        remaining.length > 0 ? remaining[remaining.length - 1] : null
+        remaining.length > 0 ? remaining[remaining.length - 1] : null,
       );
     }
     if (secondaryFile?.name === file.name) {
@@ -1116,7 +1443,7 @@ export const ProjectEditor: React.FC = () => {
     if (openTabs.length >= 2 && !splitView) {
       setSplitView(true);
       setSecondaryFile(
-        openTabs.find((t) => t.name !== selectedFile?.name) || null
+        openTabs.find((t) => t.name !== selectedFile?.name) || null,
       );
     } else if (splitView) {
       setSplitView(false);
@@ -1137,7 +1464,7 @@ export const ProjectEditor: React.FC = () => {
       }
       return null;
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -1243,7 +1570,7 @@ export const ProjectEditor: React.FC = () => {
       onClick: () =>
         editorRef.current?.trigger(
           "keyboard",
-          "editor.action.startFindReplaceAction"
+          "editor.action.startFindReplaceAction",
         ),
     },
     { divider: true, label: "" },
@@ -1363,7 +1690,7 @@ export const ProjectEditor: React.FC = () => {
                 onClick: () =>
                   editorRef.current?.trigger(
                     "keyboard",
-                    "editor.action.selectAll"
+                    "editor.action.selectAll",
                   ),
               },
             ]}
@@ -1396,7 +1723,7 @@ export const ProjectEditor: React.FC = () => {
                 onClick: () =>
                   editorRef.current?.trigger(
                     "keyboard",
-                    "editor.action.gotoLine"
+                    "editor.action.gotoLine",
                   ),
               },
             ]}
@@ -1505,7 +1832,7 @@ export const ProjectEditor: React.FC = () => {
                     onClick: () =>
                       editorRef.current?.trigger(
                         "keyboard",
-                        "editor.action.quickCommand"
+                        "editor.action.quickCommand",
                       ),
                   },
                   {
@@ -1513,7 +1840,7 @@ export const ProjectEditor: React.FC = () => {
                     onClick: () =>
                       window.open(
                         "https://code.visualstudio.com/docs",
-                        "_blank"
+                        "_blank",
                       ),
                   },
                   {
@@ -1543,7 +1870,7 @@ export const ProjectEditor: React.FC = () => {
                     shortcut: "Ctrl+K Ctrl+R",
                     onClick: () =>
                       toast.info(
-                        "Ctrl+K: Clear | Ctrl+L: Theme | Ctrl+S: Save | Ctrl+`: Terminal"
+                        "Ctrl+K: Clear | Ctrl+L: Theme | Ctrl+S: Save | Ctrl+`: Terminal",
                       ),
                   },
                   {
@@ -1554,7 +1881,7 @@ export const ProjectEditor: React.FC = () => {
                     label: "Tips and Tricks",
                     onClick: () =>
                       toast.success(
-                        'Try typing "help" in the terminal for commands!'
+                        'Try typing "help" in the terminal for commands!',
                       ),
                   },
                   { divider: true, label: "" },
@@ -1636,27 +1963,21 @@ export const ProjectEditor: React.FC = () => {
           <div className="flex items-center gap-0.5 mr-2 border-r border-[#454545] pr-2">
             <button
               onClick={() => setShowSidebar((prev) => !prev)}
-              className={`p-1 ${
-                showSidebar ? "text-white bg-[#3c3c3c]" : "text-[#858585]"
-              } hover:text-white hover:bg-[#3c3c3c] rounded`}
+              className={`p-1 ${showSidebar ? "text-white bg-[#3c3c3c]" : "text-[#858585]"} hover:text-white hover:bg-[#3c3c3c] rounded`}
               title="Toggle Primary Side Bar (Ctrl+B)"
             >
               <PanelLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowTerminal((prev) => !prev)}
-              className={`p-1 ${
-                showTerminal ? "text-white bg-[#3c3c3c]" : "text-[#858585]"
-              } hover:text-white hover:bg-[#3c3c3c] rounded`}
+              className={`p-1 ${showTerminal ? "text-white bg-[#3c3c3c]" : "text-[#858585]"} hover:text-white hover:bg-[#3c3c3c] rounded`}
               title="Toggle Panel (Ctrl+J)"
             >
               <PanelBottom className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowRightSidebar((prev) => !prev)}
-              className={`p-1 ${
-                showRightSidebar ? "text-white bg-[#3c3c3c]" : "text-[#858585]"
-              } hover:text-white hover:bg-[#3c3c3c] rounded`}
+              className={`p-1 ${showRightSidebar ? "text-white bg-[#3c3c3c]" : "text-[#858585]"} hover:text-white hover:bg-[#3c3c3c] rounded`}
               title="Toggle Secondary Side Bar"
             >
               <PanelRight className="w-4 h-4" />
@@ -1704,11 +2025,7 @@ export const ProjectEditor: React.FC = () => {
         <div className="w-12 bg-[#333333] flex flex-col items-center py-2 border-r border-[#252526]">
           <button
             onClick={() => setShowSidebar((prev) => !prev)}
-            className={`p-2.5 ${
-              showSidebar
-                ? "text-white bg-[#252526] border-l-2 border-white"
-                : "text-[#858585] hover:text-white"
-            }`}
+            className={`p-2.5 ${showSidebar ? "text-white bg-[#252526] border-l-2 border-white" : "text-[#858585] hover:text-white"}`}
             title="Explorer"
           >
             <FileText className="w-5 h-5" />
@@ -1734,9 +2051,7 @@ export const ProjectEditor: React.FC = () => {
           <div className="flex-1" />
           <button
             onClick={() => setShowTerminal((prev) => !prev)}
-            className={`p-2.5 ${
-              showTerminal ? "text-white" : "text-[#858585]"
-            } hover:text-white`}
+            className={`p-2.5 ${showTerminal ? "text-white" : "text-[#858585]"} hover:text-white`}
             title="Terminal"
           >
             <TerminalIcon className="w-5 h-5" />
@@ -1758,7 +2073,7 @@ export const ProjectEditor: React.FC = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={handleNewFile}
+                      onClick={() => handleNewFile(null)}
                       className="p-1 hover:bg-[#3c3c3c] rounded"
                     >
                       <FilePlus className="w-4 h-4" />
@@ -1771,7 +2086,7 @@ export const ProjectEditor: React.FC = () => {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={handleNewFolder}
+                      onClick={() => handleNewFolder(null)}
                       className="p-1 hover:bg-[#3c3c3c] rounded"
                     >
                       <FolderPlus className="w-4 h-4" />
@@ -1813,6 +2128,35 @@ export const ProjectEditor: React.FC = () => {
               </div>
             </div>
 
+            {/* Search/Filter Input */}
+            <div className="px-2 py-1.5">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-[#858585]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Filter files..."
+                  className="w-full pl-8 pr-8 py-1.5 bg-[#3c3c3c] text-[#cccccc] text-sm rounded border border-transparent focus:border-[#007acc] outline-none placeholder-[#858585]"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-[#4c4c4c] rounded"
+                  >
+                    <X className="w-3 h-3 text-[#858585]" />
+                  </button>
+                )}
+              </div>
+              {searchQuery && (
+                <div className="mt-1 text-[10px] text-[#858585] flex items-center gap-1">
+                  <Filter className="w-3 h-3" />
+                  {filteredFiles.length} result
+                  {filteredFiles.length !== 1 ? "s" : ""}
+                </div>
+              )}
+            </div>
+
             {/* Context Menu */}
             {contextMenu && (
               <ContextMenu
@@ -1822,11 +2166,19 @@ export const ProjectEditor: React.FC = () => {
                 isFolder={contextMenu.file?.type === "folder"}
                 onClose={() => setContextMenu(null)}
                 onNewFile={() => {
-                  setShowNewFileInput(true);
+                  const folder =
+                    contextMenu.file?.type === "folder"
+                      ? contextMenu.file
+                      : null;
+                  handleNewFile(folder);
                   setContextMenu(null);
                 }}
                 onNewFolder={() => {
-                  setShowNewFolderInput(true);
+                  const folder =
+                    contextMenu.file?.type === "folder"
+                      ? contextMenu.file
+                      : null;
+                  handleNewFolder(folder);
                   setContextMenu(null);
                 }}
                 onDelete={() => {
@@ -1834,7 +2186,10 @@ export const ProjectEditor: React.FC = () => {
                   setContextMenu(null);
                 }}
                 onRename={() => {
-                  toast.info("Rename: " + contextMenu.file?.name);
+                  if (contextMenu.file) {
+                    setRenamingFile(contextMenu.file);
+                    setRenameValue(contextMenu.file.name);
+                  }
                   setContextMenu(null);
                 }}
                 onCopy={() => {
@@ -1866,6 +2221,11 @@ export const ProjectEditor: React.FC = () => {
             {/* New File Input */}
             {showNewFileInput && (
               <div className="px-2 py-1">
+                {targetFolder && (
+                  <div className="text-xs text-[#858585] mb-1">
+                    Creating in: {targetFolder.name}/
+                  </div>
+                )}
                 <input
                   type="text"
                   value={newItemName}
@@ -1875,11 +2235,13 @@ export const ProjectEditor: React.FC = () => {
                     if (e.key === "Escape") {
                       setShowNewFileInput(false);
                       setNewItemName("");
+                      setTargetFolder(null);
                     }
                   }}
                   onBlur={() => {
                     setShowNewFileInput(false);
                     setNewItemName("");
+                    setTargetFolder(null);
                   }}
                   placeholder="filename.tsx"
                   className="w-full px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-sm border border-[#007acc] rounded outline-none"
@@ -1891,6 +2253,11 @@ export const ProjectEditor: React.FC = () => {
             {/* New Folder Input */}
             {showNewFolderInput && (
               <div className="px-2 py-1">
+                {targetFolder && (
+                  <div className="text-xs text-[#858585] mb-1">
+                    Creating in: {targetFolder.name}/
+                  </div>
+                )}
                 <input
                   type="text"
                   value={newItemName}
@@ -1900,11 +2267,13 @@ export const ProjectEditor: React.FC = () => {
                     if (e.key === "Escape") {
                       setShowNewFolderInput(false);
                       setNewItemName("");
+                      setTargetFolder(null);
                     }
                   }}
                   onBlur={() => {
                     setShowNewFolderInput(false);
                     setNewItemName("");
+                    setTargetFolder(null);
                   }}
                   placeholder="folder-name"
                   className="w-full px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-sm border border-[#007acc] rounded outline-none"
@@ -1921,7 +2290,7 @@ export const ProjectEditor: React.FC = () => {
             </div>
             <div className="flex-1 overflow-y-auto">
               <FileTree
-                files={projectFiles}
+                files={filteredFiles}
                 onFileSelect={handleFileSelect}
                 selectedFile={selectedFile}
                 onDeleteFile={handleDeleteFile}
@@ -1929,8 +2298,35 @@ export const ProjectEditor: React.FC = () => {
                   e.preventDefault();
                   setContextMenu({ x: e.clientX, y: e.clientY, file });
                 }}
-                expanded={expanded}
+                expanded={
+                  searchQuery
+                    ? Object.fromEntries(
+                        filteredFiles
+                          .flatMap(function getAllFolderNames(
+                            f: ProjectFile,
+                          ): string[] {
+                            if (f.type === "folder") {
+                              return [
+                                f.name,
+                                ...(f.children?.flatMap(getAllFolderNames) ||
+                                  []),
+                              ];
+                            }
+                            return [];
+                          })
+                          .map((name) => [name, true]),
+                      )
+                    : expanded
+                }
                 setExpanded={setExpanded}
+                renamingFile={renamingFile}
+                renameValue={renameValue}
+                setRenameValue={setRenameValue}
+                onRenameSubmit={handleRenameFile}
+                onRenameStart={(file) => {
+                  setRenamingFile(file);
+                  setRenameValue(file.name);
+                }}
               />
             </div>
 
@@ -1954,9 +2350,7 @@ export const ProjectEditor: React.FC = () => {
         <div className="flex-1 flex flex-col min-w-0 bg-[#1e1e1e]">
           {/* Editor Area */}
           <div
-            className={`flex-1 flex flex-col min-h-0 ${
-              showTerminal ? "h-[60%]" : ""
-            }`}
+            className={`flex-1 flex flex-col min-h-0 ${showTerminal ? "h-[60%]" : ""}`}
           >
             {/* Tabs Bar */}
             <div className="flex items-center bg-[#252526] border-b border-[#1e1e1e]">
@@ -1972,11 +2366,7 @@ export const ProjectEditor: React.FC = () => {
                     }`}
                   >
                     <File
-                      className={`w-4 h-4 ${
-                        tab.name.endsWith(".tsx") || tab.name.endsWith(".ts")
-                          ? "text-blue-400"
-                          : "text-[#cccccc]"
-                      }`}
+                      className={`w-4 h-4 ${tab.name.endsWith(".tsx") || tab.name.endsWith(".ts") ? "text-blue-400" : "text-[#cccccc]"}`}
                     />
                     <span className="text-sm text-[#cccccc] whitespace-nowrap">
                       {tab.name}
@@ -1996,9 +2386,7 @@ export const ProjectEditor: React.FC = () => {
               {/* Split View Button */}
               <button
                 onClick={handleSplitEditor}
-                className={`p-2 mx-1 hover:bg-[#3c3c3c] rounded ${
-                  splitView ? "text-white bg-[#3c3c3c]" : "text-[#858585]"
-                }`}
+                className={`p-2 mx-1 hover:bg-[#3c3c3c] rounded ${splitView ? "text-white bg-[#3c3c3c]" : "text-[#858585]"}`}
                 title="Split Editor (Ctrl+\\)"
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -2022,9 +2410,7 @@ export const ProjectEditor: React.FC = () => {
             >
               {/* Primary Editor */}
               <div
-                className={`${
-                  splitView ? "w-1/2 border-r border-[#454545]" : "w-full"
-                } h-full`}
+                className={`${splitView ? "w-1/2 border-r border-[#454545]" : "w-full"} h-full`}
               >
                 {selectedFile ? (
                   <Editor
@@ -2080,12 +2466,7 @@ export const ProjectEditor: React.FC = () => {
                           }`}
                         >
                           <File
-                            className={`w-4 h-4 ${
-                              tab.name.endsWith(".tsx") ||
-                              tab.name.endsWith(".ts")
-                                ? "text-blue-400"
-                                : "text-[#cccccc]"
-                            }`}
+                            className={`w-4 h-4 ${tab.name.endsWith(".tsx") || tab.name.endsWith(".ts") ? "text-blue-400" : "text-[#cccccc]"}`}
                           />
                           <span className="text-sm text-[#cccccc] whitespace-nowrap">
                             {tab.name}
@@ -2166,18 +2547,14 @@ export const ProjectEditor: React.FC = () => {
           <div className="w-12 bg-[#333333] flex flex-col items-center py-2 border-l border-[#252526]">
             <button
               onClick={handleSplitEditor}
-              className={`p-2.5 ${
-                splitView ? "text-white" : "text-[#858585]"
-              } hover:text-white`}
+              className={`p-2.5 ${splitView ? "text-white" : "text-[#858585]"} hover:text-white`}
               title="Split Editor"
             >
               <Layers className="w-5 h-5" />
             </button>
             <button
               onClick={() => setShowTerminal((prev) => !prev)}
-              className={`p-2.5 ${
-                showTerminal ? "text-white" : "text-[#858585]"
-              } hover:text-white`}
+              className={`p-2.5 ${showTerminal ? "text-white" : "text-[#858585]"} hover:text-white`}
               title="Terminal"
             >
               <TerminalIcon className="w-5 h-5" />
@@ -2185,6 +2562,204 @@ export const ProjectEditor: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Keyboard Shortcuts Popup */}
+      {showShortcuts && (
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            className="bg-[#252526] border border-[#454545] rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#454545]">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-[#007acc] rounded-lg">
+                  <Keyboard className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-white">
+                    Keyboard Shortcuts
+                  </h2>
+                  <p className="text-xs text-[#858585]">
+                    Press Ctrl+? to toggle this popup
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowShortcuts(false)}
+                className="p-2 hover:bg-[#3c3c3c] rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-[#858585]" />
+              </button>
+            </div>
+
+            {/* Shortcuts List */}
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* File Operations */}
+                <div>
+                  <h3 className="text-sm font-semibold text-[#007acc] mb-3 flex items-center gap-2">
+                    <File className="w-4 h-4" />
+                    File Operations
+                  </h3>
+                  <div className="space-y-2">
+                    {[
+                      { keys: "Ctrl + S", desc: "Save current file" },
+                      { keys: "Ctrl + Shift + S", desc: "Save all files" },
+                      { keys: "Ctrl + N", desc: "New file" },
+                      { keys: "Ctrl + O", desc: "Open file" },
+                      { keys: "Ctrl + F4", desc: "Close editor" },
+                    ].map((shortcut, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#2a2d2e]"
+                      >
+                        <span className="text-sm text-[#cccccc]">
+                          {shortcut.desc}
+                        </span>
+                        <kbd className="px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-xs rounded border border-[#555] font-mono">
+                          {shortcut.keys}
+                        </kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Editing */}
+                <div>
+                  <h3 className="text-sm font-semibold text-[#007acc] mb-3 flex items-center gap-2">
+                    <Edit3 className="w-4 h-4" />
+                    Editing
+                  </h3>
+                  <div className="space-y-2">
+                    {[
+                      { keys: "Ctrl + Z", desc: "Undo" },
+                      { keys: "Ctrl + Y", desc: "Redo" },
+                      { keys: "Ctrl + X", desc: "Cut" },
+                      { keys: "Ctrl + C", desc: "Copy" },
+                      { keys: "Ctrl + V", desc: "Paste" },
+                      { keys: "Ctrl + /", desc: "Toggle comment" },
+                    ].map((shortcut, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#2a2d2e]"
+                      >
+                        <span className="text-sm text-[#cccccc]">
+                          {shortcut.desc}
+                        </span>
+                        <kbd className="px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-xs rounded border border-[#555] font-mono">
+                          {shortcut.keys}
+                        </kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Navigation */}
+                <div>
+                  <h3 className="text-sm font-semibold text-[#007acc] mb-3 flex items-center gap-2">
+                    <Search className="w-4 h-4" />
+                    Search & Navigation
+                  </h3>
+                  <div className="space-y-2">
+                    {[
+                      { keys: "Ctrl + F", desc: "Find in file" },
+                      { keys: "Ctrl + H", desc: "Replace" },
+                      { keys: "Ctrl + G", desc: "Go to line" },
+                      { keys: "Ctrl + P", desc: "Quick open file" },
+                      { keys: "Ctrl + Shift + P", desc: "Command palette" },
+                    ].map((shortcut, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#2a2d2e]"
+                      >
+                        <span className="text-sm text-[#cccccc]">
+                          {shortcut.desc}
+                        </span>
+                        <kbd className="px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-xs rounded border border-[#555] font-mono">
+                          {shortcut.keys}
+                        </kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* View & Panels */}
+                <div>
+                  <h3 className="text-sm font-semibold text-[#007acc] mb-3 flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4" />
+                    View & Panels
+                  </h3>
+                  <div className="space-y-2">
+                    {[
+                      { keys: "Ctrl + B", desc: "Toggle sidebar" },
+                      { keys: "Ctrl + `", desc: "Toggle terminal" },
+                      { keys: "Ctrl + \\", desc: "Split editor" },
+                      { keys: "F2", desc: "Rename file" },
+                      { keys: "Ctrl + ?", desc: "Show shortcuts" },
+                      { keys: "Esc", desc: "Close popup/cancel" },
+                    ].map((shortcut, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#2a2d2e]"
+                      >
+                        <span className="text-sm text-[#cccccc]">
+                          {shortcut.desc}
+                        </span>
+                        <kbd className="px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-xs rounded border border-[#555] font-mono">
+                          {shortcut.keys}
+                        </kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* File Explorer */}
+                <div className="md:col-span-2">
+                  <h3 className="text-sm font-semibold text-[#007acc] mb-3 flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4" />
+                    File Explorer
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {[
+                      { keys: "Double-click", desc: "Rename file/folder" },
+                      { keys: "Delete", desc: "Delete file" },
+                      { keys: "Drag & Drop", desc: "Move file to folder" },
+                      { keys: "Right-click", desc: "Context menu" },
+                    ].map((shortcut, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-[#2a2d2e]"
+                      >
+                        <span className="text-sm text-[#cccccc]">
+                          {shortcut.desc}
+                        </span>
+                        <kbd className="px-2 py-1 bg-[#3c3c3c] text-[#cccccc] text-xs rounded border border-[#555] font-mono">
+                          {shortcut.keys}
+                        </kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 border-t border-[#454545] bg-[#1e1e1e]">
+              <p className="text-xs text-[#858585] text-center">
+                Press{" "}
+                <kbd className="px-1.5 py-0.5 bg-[#3c3c3c] rounded text-[#cccccc] mx-1">
+                  Esc
+                </kbd>{" "}
+                or click outside to close
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
