@@ -1,5 +1,5 @@
 import React from "react";
-import { personalInfo, skills } from "@/data/portfolio";
+import { personalInfo, skills } from "../../../Data/portfolio";
 
 export const NeofetchOutput: React.FC = () => {
   const getUptime = () => {

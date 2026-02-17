@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Sparkles,
   MapPin,
-  Phone,
 } from "lucide-react";
 
 export const ConnectOutput: React.FC = () => {

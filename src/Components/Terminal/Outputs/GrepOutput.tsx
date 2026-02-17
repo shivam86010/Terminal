@@ -1,6 +1,6 @@
 import React from "react";
-import { projects } from "@/data/portfolio";
-import { ProjectFile } from "@/types/terminal";
+import { projects } from "../../../Data/portfolio";
+import { ProjectFile } from "../../../Types/terminal";
 
 interface GrepOutputProps {
   pattern: string;

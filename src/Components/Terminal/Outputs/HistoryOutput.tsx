@@ -1,5 +1,5 @@
 import React from "react";
-import { useTerminal } from "@/context/TerminalContext";
+import { useTerminal } from "../../../Context/TerminalContext";
 
 export const HistoryOutput: React.FC = () => {
   const { commandHistory } = useTerminal();
