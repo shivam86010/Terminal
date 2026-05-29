@@ -15,7 +15,7 @@ import {
   Heart,
   Star,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 
 const Resume: React.FC = () => {
   const navigate = useNavigate();
@@ -46,13 +46,13 @@ const Resume: React.FC = () => {
             <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
               Resume
             </h1>
-            <Button
+            <button
               onClick={handleDownload}
               className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg shadow-cyan-500/25"
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Download PDF</span>
-            </Button>
+            </button>
           </div>
         </div>
       </header>
@@ -449,19 +449,19 @@ const Resume: React.FC = () => {
 
         {/* Download Button Footer */}
         <div className="mt-8 text-center">
-          <Button
+          <button
             onClick={handleDownload}
             size="lg"
             className="bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-600 hover:from-cyan-600 hover:via-blue-600 hover:to-purple-700 text-white shadow-lg shadow-blue-500/25 px-8"
           >
             <Download className="w-5 h-5 mr-2" />
             Download Resume as PDF
-          </Button>
+          </button>
           <p className="text-muted-foreground text-sm mt-3">
             Click to download the complete resume in PDF format
           </p>
         </div>
-      </main>
+      </main>ss
     </div>
   );
 };

@@ -1,12 +1,15 @@
-import React from 'react';
+import React from "react";
 
-type ArtType = 'coffee' | 'rocket' | 'heart' | 'skull' | 'cat' | 'dog';
+type ArtType = "coffee" | "rocket" | "heart" | "skull" | "cat" | "dog";
 
 interface AsciiArtOutputProps {
   type: ArtType;
 }
 
-const artCollection: Record<ArtType, { art: string; message: string; color: string }> = {
+const artCollection: Record<
+  ArtType,
+  { art: string; message: string; color: string }
+> = {
   coffee: {
     art: `
       ( (
@@ -17,7 +20,7 @@ const artCollection: Record<ArtType, { art: string; message: string; color: stri
      \`----'
     `,
     message: "Fuel for developers!",
-    color: 'text-terminal-warning'
+    color: "text-terminal-warning",
   },
   rocket: {
     art: `
@@ -34,7 +37,7 @@ const artCollection: Record<ArtType, { art: string; message: string; color: stri
     |___|___|
     `,
     message: "To infinity and beyond! 🚀",
-    color: 'text-terminal-info'
+    color: "text-terminal-info",
   },
   heart: {
     art: `
@@ -55,7 +58,7 @@ const artCollection: Record<ArtType, { art: string; message: string; color: stri
    ████████████████████████████████
     `,
     message: "Made with love ❤️",
-    color: 'text-terminal-error'
+    color: "text-terminal-error",
   },
   skull: {
     art: `
@@ -70,7 +73,7 @@ const artCollection: Record<ArtType, { art: string; message: string; color: stri
       '-......-'
     `,
     message: "Danger Zone! ☠️",
-    color: 'text-muted-foreground'
+    color: "text-muted-foreground",
   },
   cat: {
     art: `
@@ -83,7 +86,7 @@ const artCollection: Record<ArtType, { art: string; message: string; color: stri
 (__(__)___(__)__)
     `,
     message: "Meow! 🐱",
-    color: 'text-terminal-warning'
+    color: "text-terminal-warning",
   },
   dog: {
     art: `
@@ -94,12 +97,21 @@ const artCollection: Record<ArtType, { art: string; message: string; color: stri
     /_____/   U
     `,
     message: "Woof! 🐕",
-    color: 'text-terminal-success'
-  }
+    color: "text-terminal-success",
+  },
 };
 
 export const AsciiArtOutput: React.FC<AsciiArtOutputProps> = ({ type }) => {
   const { art, message, color } = artCollection[type];
 
   return (
-   
+    <div className="slide-up font-mono">
+      <pre
+        className={`${color} terminal-glow text-xs sm:text-sm leading-tight`}
+      >
+        {art}
+      </pre>
+      <div className="mt-2 text-muted-foreground text-sm">{message}</div>
+    </div>
+  );
+};

@@ -6,8 +6,8 @@ import React, {
   useMemo,
 } from "react";
 import Editor from "@monaco-editor/react";
-import { useTerminal } from "@/context/TerminalContext";
-import { ProjectFile } from "@/types/terminal";
+import { useTerminal } from "../../Context/TerminalContext";
+import type { ProjectFile } from "../../Types/terminal";
 import {
   ChevronRight,
   ChevronDown,
@@ -64,7 +64,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "../Ui/tooltip";
 
 // Context Menu Component
 interface ContextMenuProps {
