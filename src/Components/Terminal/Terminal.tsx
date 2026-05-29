@@ -16,9 +16,9 @@ export const Terminal: React.FC = () => {
   }, [commandHistory]);
 
   return (
-    <div className="flex flex-col h-full bg-terminal-bg border border-terminal-border rounded-lg terminal-box-glow overflow-hidden scanlines">
+    <div className="flex flex-col  h-full bg-terminal-bg border border-terminal-border rounded-lg terminal-box-glow overflow-hidden scanlines">
       {/* Terminal Header */}
-      <div className="flex items-center gap-2 px-4 py-3 bg-muted/20 border-b border-terminal-border">
+      <div className="flex  items-center gap-2 px-4 py-3 bg-muted/20 border-b border-terminal-border">
         <div className="flex gap-2">
           <div className="w-3 h-3 rounded-full bg-terminal-error" />
           <div className="w-3 h-3 rounded-full bg-terminal-warning" />

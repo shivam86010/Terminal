@@ -64,7 +64,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "../Ui/tooltip";
+} from "../../Components/Ui/tooltip";
 
 // Context Menu Component
 interface ContextMenuProps {
